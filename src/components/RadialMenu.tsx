@@ -19,7 +19,7 @@ type Props = {
 
 const SOCIALS = [
   { label: "About", href: "/about", angle: 200 },
-  { label: "Instagram", href: "https://instagram.com", angle: 340 },
+  { label: "Instagram", href: "https://www.instagram.com/whoisroyquestionmark/", angle: 340 },
 ];
 
 export default function RadialMenu({ open, onClose, thumbs = [] }: Props) {
@@ -105,7 +105,7 @@ export default function RadialMenu({ open, onClose, thumbs = [] }: Props) {
               }}
             >
               <Image
-                src="/dp.png"
+                src="/dp.jpg"
                 alt="Naabi Kage"
                 width={240}
                 height={240}

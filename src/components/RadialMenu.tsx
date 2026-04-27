@@ -105,7 +105,7 @@ export default function RadialMenu({ open, onClose, thumbs = [] }: Props) {
               }}
             >
               <Image
-                src="/dp.jpg"
+                src="/DP.jpg"
                 alt="Naabi Kage"
                 width={240}
                 height={240}

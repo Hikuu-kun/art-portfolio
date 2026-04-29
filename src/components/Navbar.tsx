@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import RadialMenu, { type RadialThumb } from "./RadialMenu";
 import type { Work } from "@/data/works";
@@ -18,21 +19,38 @@ const NAV_LINKS: { label: string; href: string }[] = [
   { label: "ABOUT", href: "/about" },
 ];
 
+function shuffle<T>(arr: T[]) {
+  const copy = [...arr];
+
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+
+  return copy;
+}
+
 export default function Navbar({
   works = [],
   thumbs,
   selectedYear = null,
   onSelectYear,
 }: Props) {
-  const fallbackThumbs: RadialThumb[] = works
-    .filter((w) => w.image)
-    .slice(0, 8)
-    .map((w) => ({
-      id: w.id,
-      image: w.image,
-      title: w.title,
-      href: "/",
-    }));
+  const router = useRouter();
+  const isFilterMode = typeof onSelectYear === "function";
+
+  const fallbackThumbs: RadialThumb[] = useMemo(
+    () =>
+      shuffle(works.filter((w) => w.image))
+        .slice(0, 8)
+        .map((w) => ({
+          id: w.id,
+          image: w.image,
+          title: w.title,
+          href: `/?work=${encodeURIComponent(w.id)}`,
+        })),
+    [works],
+  );
 
   const radialThumbs =
     thumbs && thumbs.length > 0 ? thumbs : fallbackThumbs;
@@ -62,6 +80,10 @@ export default function Navbar({
     return Array.from(map.entries()).sort((a, b) => b[0] - a[0]);
   }, [works]);
 
+  const openMenu = () => {
+    setMenuOpen(true);
+  };
+
   return (
     <>
       <header
@@ -82,7 +104,7 @@ export default function Navbar({
       >
         <button
           type="button"
-          onClick={() => setMenuOpen(true)}
+          onClick={openMenu}
           aria-label="Open navigation menu"
           className="nav-brand"
           style={{
@@ -98,6 +120,7 @@ export default function Navbar({
             background: "transparent",
             whiteSpace: "nowrap",
             flexShrink: 0,
+            cursor: "pointer",
           }}
         >
           NAABI KAGE
@@ -127,7 +150,13 @@ export default function Navbar({
                 >
                   <button
                     type="button"
-                    onClick={() => onSelectYear?.(null)}
+                    onClick={() => {
+                      if (isFilterMode) {
+                        onSelectYear?.(null);
+                      } else {
+                        router.push("/");
+                      }
+                    }}
                     style={{
                       border: "none",
                       background: "transparent",
@@ -181,7 +210,11 @@ export default function Navbar({
                           <button
                             type="button"
                             onClick={() => {
-                              onSelectYear?.(year);
+                              if (isFilterMode) {
+                                onSelectYear?.(year);
+                              } else {
+                                router.push("/");
+                              }
                               setWorkOpen(false);
                             }}
                             style={{
@@ -242,6 +275,7 @@ export default function Navbar({
             background: "transparent",
             border: 0,
             padding: 4,
+            cursor: "pointer",
           }}
         >
           {mobileOpen ? "CLOSE" : "MENU"}

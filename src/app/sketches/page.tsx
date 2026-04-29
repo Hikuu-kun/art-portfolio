@@ -12,11 +12,13 @@ export default function SketchesPage() {
   const sketches = loadSketches();
 
   return (
-    <main style={{ position: "relative", minHeight: "100vh" }}>
+    <main style={{ position: "relative", minHeight: "100vh", zIndex: 1}}>
       <Navbar works={works} />
       <section
         className="sketches-wrap"
         style={{
+          position: "relative",
+          zIndex: 1,
           maxWidth: 1100,
           margin: "0 auto",
           padding: "120px 10% 80px",

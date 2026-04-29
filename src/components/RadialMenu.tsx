@@ -18,18 +18,32 @@ type Props = {
 };
 
 const SOCIALS = [
-  { label: "About", href: "/about", angle: 200 },
-  { label: "Instagram", href: "https://www.instagram.com/whoisroyquestionmark/", angle: 340 },
+  {
+    label: "About",
+    href: "/about",
+    angle: 200,
+  },
+  {
+    label: "Instagram",
+    href: "https://www.instagram.com/whoisroyquestionmark/",
+    angle: 340,
+  },
 ];
 
-export default function RadialMenu({ open, onClose, thumbs = [] }: Props) {
+export default function RadialMenu({
+  open,
+  onClose,
+  thumbs = [],
+}: Props) {
   const [tilt, setTilt] = useState(0);
   const [hovering, setHovering] = useState(false);
   const dpRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
+
     document.body.style.overflow = "hidden";
+
     return () => {
       document.body.style.overflow = "";
     };
@@ -37,8 +51,10 @@ export default function RadialMenu({ open, onClose, thumbs = [] }: Props) {
 
   const orbitItems = useMemo(() => {
     if (thumbs.length === 0) return [];
+
     const count = Math.min(thumbs.length, 8);
     const picked = thumbs.slice(0, count);
+
     return picked.map((t, i) => ({
       ...t,
       angle: (360 / count) * i - 90,
@@ -48,13 +64,20 @@ export default function RadialMenu({ open, onClose, thumbs = [] }: Props) {
 
   if (!open) return null;
 
-  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMove = (
+    e: React.MouseEvent<HTMLDivElement>,
+  ) => {
     const el = dpRef.current;
     if (!el) return;
+
     const rect = el.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const dx = e.clientX - cx;
-    const norm = Math.max(-1, Math.min(1, dx / (rect.width / 2)));
+    const norm = Math.max(
+      -1,
+      Math.min(1, dx / (rect.width / 2)),
+    );
+
     setTilt(norm * 12);
   };
 
@@ -80,11 +103,19 @@ export default function RadialMenu({ open, onClose, thumbs = [] }: Props) {
         className="rm-stage"
       >
         {orbitItems.map((t) => (
-          <OrbitThumb key={t.id} item={t} onClose={onClose} />
+          <OrbitThumb
+            key={t.id}
+            item={t}
+            onClose={onClose}
+          />
         ))}
 
         {SOCIALS.map((s) => (
-          <SocialNode key={s.label} {...s} onClose={onClose} />
+          <SocialNode
+            key={s.label}
+            {...s}
+            onClose={onClose}
+          />
         ))}
 
         <div className="rm-center">
@@ -120,21 +151,33 @@ export default function RadialMenu({ open, onClose, thumbs = [] }: Props) {
               />
             </div>
           </div>
-          <div className="rm-name">NAABI KAGE</div>
+
+          <div className="rm-name">
+            NAABI KAGE
+          </div>
         </div>
       </div>
 
       <style>{`
-        @keyframes rm-fade { from { opacity: 0 } to { opacity: 1 } }
-        @keyframes rm-fade-in { to { opacity: 1 } }
+        @keyframes rm-fade {
+          from { opacity: 0 }
+          to { opacity: 1 }
+        }
+
+        @keyframes rm-fade-in {
+          to { opacity: 1 }
+        }
+
         @keyframes rm-float-y {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-14px); }
         }
+
         @keyframes rm-bob {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-10px); }
         }
+
         .rm-stage {
           position: relative;
           width: min(640px, 92vw);
@@ -143,6 +186,7 @@ export default function RadialMenu({ open, onClose, thumbs = [] }: Props) {
           align-items: center;
           justify-content: center;
         }
+
         .rm-center {
           position: relative;
           display: flex;
@@ -151,19 +195,24 @@ export default function RadialMenu({ open, onClose, thumbs = [] }: Props) {
           gap: clamp(14px, 2.5vw, 24px);
           z-index: 5;
         }
+
         .rm-dp-wrap {
           animation: rm-float-y 4.8s ease-in-out infinite;
           cursor: pointer;
         }
+
         .rm-dp {
           width: clamp(140px, 26vw, 240px);
           height: clamp(140px, 26vw, 240px);
           border-radius: 50%;
           overflow: hidden;
-          box-shadow: 0 30px 60px rgba(26,24,20,0.18), 0 8px 20px rgba(26,24,20,0.1);
+          box-shadow:
+            0 30px 60px rgba(26,24,20,0.18),
+            0 8px 20px rgba(26,24,20,0.1);
           transition: transform 600ms cubic-bezier(0.42, 0, 0.58, 1);
           will-change: transform;
         }
+
         .rm-name {
           font-family: var(--display);
           font-weight: 300;
@@ -180,23 +229,31 @@ function OrbitThumb({
   item,
   onClose,
 }: {
-  item: RadialThumb & { angle: number; delay: number };
+  item: RadialThumb & {
+    angle: number;
+    delay: number;
+  };
   onClose: () => void;
 }) {
-  const rad = (item.angle * Math.PI) / 180;
-  const radiusVar = `var(--orbit-r)`;
-  const x = `calc(cos(${item.angle}deg) * ${radiusVar})`;
-  const y = `calc(sin(${item.angle}deg) * ${radiusVar})`;
-  void rad;
+  const x = `calc(cos(${item.angle}deg) * var(--orbit-r))`;
+  const y = `calc(sin(${item.angle}deg) * var(--orbit-r))`;
+
   const inner = (
-    <span className="rm-thumb-inner" style={{ animation: `rm-bob 5s ease-in-out ${item.delay}s infinite` }}>
+    <span
+      className="rm-thumb-inner"
+      style={{
+        animation: `rm-bob 5s ease-in-out ${item.delay}s infinite`,
+      }}
+    >
       <span className="rm-thumb-img">
-        {item.image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.image} alt={item.title} />
-        ) : null}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={item.image} alt={item.title} />
       </span>
-      <span className="rm-thumb-label">{item.title}</span>
+
+      <span className="rm-thumb-label">
+        {item.title}
+      </span>
+
       <style jsx>{`
         .rm-thumb-inner {
           display: flex;
@@ -204,6 +261,7 @@ function OrbitThumb({
           align-items: center;
           gap: 6px;
         }
+
         .rm-thumb-img {
           width: clamp(48px, 8vw, 72px);
           height: clamp(48px, 8vw, 72px);
@@ -213,17 +271,20 @@ function OrbitThumb({
           border: 0.5px solid rgba(26,24,20,0.2);
           box-shadow: 0 8px 20px rgba(26,24,20,0.1);
           display: block;
-          transition: transform 400ms var(--ease-out, ease-out);
+          transition: transform 400ms ease;
         }
+
         .rm-thumb-img :global(img) {
           width: 100%;
           height: 100%;
           object-fit: cover;
           display: block;
         }
+
         .rm-thumb-inner:hover .rm-thumb-img {
           transform: scale(1.12);
         }
+
         .rm-thumb-label {
           font-family: var(--display);
           font-style: italic;
@@ -247,18 +308,19 @@ function OrbitThumb({
     ["--orbit-r" as string]: "min(260px, 40vw)",
     transform: `translate(calc(-50% + ${x}), calc(-50% + ${y}))`,
     opacity: 0,
-    animation: `rm-fade-in 700ms var(--ease-out) ${item.delay}s forwards`,
+    animation: `rm-fade-in 700ms ease ${item.delay}s forwards`,
     zIndex: 3,
   };
 
-  if (item.href) {
-    return (
-      <Link href={item.href} style={wrapStyle} onClick={onClose}>
-        {inner}
-      </Link>
-    );
-  }
-  return <div style={wrapStyle}>{inner}</div>;
+  return (
+    <Link
+      href={item.href ?? "/"}
+      style={wrapStyle}
+      onClick={onClose}
+    >
+      {inner}
+    </Link>
+  );
 }
 
 function SocialNode({
@@ -275,6 +337,7 @@ function SocialNode({
   const x = `calc(cos(${angle}deg) * var(--social-r))`;
   const y = `calc(sin(${angle}deg) * var(--social-r))`;
   const external = href.startsWith("http");
+
   const wrap: React.CSSProperties = {
     position: "absolute",
     left: "50%",
@@ -282,13 +345,17 @@ function SocialNode({
     ["--social-r" as string]: "min(180px, 28vw)",
     transform: `translate(calc(-50% + ${x}), calc(-50% + ${y}))`,
     opacity: 0,
-    animation: `rm-fade-in 600ms var(--ease-out) 0.35s forwards`,
+    animation: `rm-fade-in 600ms ease 0.35s forwards`,
     zIndex: 4,
   };
+
   const inner = (
     <span className="rm-social">
       <span className="rm-social-dot" />
-      <span className="rm-social-label">{label}</span>
+      <span className="rm-social-label">
+        {label}
+      </span>
+
       <style jsx>{`
         .rm-social {
           display: flex;
@@ -298,15 +365,18 @@ function SocialNode({
           animation: rm-bob 4.5s ease-in-out infinite;
           transition: transform 350ms ease-in-out;
         }
+
         .rm-social:hover {
           transform: scale(1.15);
         }
+
         .rm-social-dot {
           width: 6px;
           height: 6px;
           border-radius: 50%;
           background: rgba(26,24,20,0.55);
         }
+
         .rm-social-label {
           font-family: var(--display);
           font-style: italic;
@@ -318,12 +388,23 @@ function SocialNode({
       `}</style>
     </span>
   );
+
   return external ? (
-    <a href={href} style={wrap} target="_blank" rel="noreferrer" onClick={onClose}>
+    <a
+      href={href}
+      style={wrap}
+      target="_blank"
+      rel="noreferrer"
+      onClick={onClose}
+    >
       {inner}
     </a>
   ) : (
-    <Link href={href} style={wrap} onClick={onClose}>
+    <Link
+      href={href}
+      style={wrap}
+      onClick={onClose}
+    >
       {inner}
     </Link>
   );

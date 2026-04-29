@@ -6,11 +6,24 @@ import type { Work } from "@/data/works";
 
 type Props = {
   works: Work[];
+  initialIndex?: number;
 };
 
-export default function Gallery({ works }: Props) {
-  const [index, setIndex] = useState(0);
+export default function Gallery({
+  works,
+  initialIndex = 0,
+}: Props) {
+  const [index, setIndex] = useState(initialIndex);
   const total = works.length;
+
+  useEffect(() => {
+    const safeIndex =
+      total > 0
+        ? Math.max(0, Math.min(initialIndex, total - 1))
+        : 0;
+
+    setIndex(safeIndex);
+  }, [initialIndex, total]);
 
   const advance = useCallback(
     (delta: number) => {

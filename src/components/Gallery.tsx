@@ -1,11 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Slide from "./Slide";
-import NavButton from "./NavButton";
 import type { Work } from "@/data/works";
-
-const AUTOPLAY_MS = 10000;
 
 type Props = {
   works: Work[];
@@ -13,60 +10,33 @@ type Props = {
 
 export default function Gallery({ works }: Props) {
   const [index, setIndex] = useState(0);
-  const [progressKey, setProgressKey] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const total = works.length;
 
   const advance = useCallback(
     (delta: number) => {
-      if (total === 0) return;
+      if (!total) return;
       setIndex((i) => (i + delta + total) % total);
-      setProgressKey((k) => k + 1);
     },
     [total],
   );
-
-  const goTo = useCallback(
-    (i: number) => {
-      if (total === 0) return;
-      setIndex(((i % total) + total) % total);
-      setProgressKey((k) => k + 1);
-    },
-    [total],
-  );
-
-  useEffect(() => {
-    if (total === 0) return;
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      setIndex((i) => (i + 1) % total);
-      setProgressKey((k) => k + 1);
-    }, AUTOPLAY_MS);
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [index, total, progressKey]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft") advance(-1);
-      else if (e.key === "ArrowRight") advance(1);
+      if (e.key === "ArrowRight") advance(1);
     };
+
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [advance]);
 
-  if (total === 0) {
+  if (!total) {
     return (
       <section
-        aria-label="Gallery"
         style={{
-          position: "relative",
           height: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          display: "grid",
+          placeItems: "center",
         }}
       >
         <p
@@ -83,238 +53,81 @@ export default function Gallery({ works }: Props) {
     );
   }
 
-  const touchRef = useRef<{ x: number; y: number; t: number } | null>(null);
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    const t = e.touches[0];
-    touchRef.current = { x: t.clientX, y: t.clientY, t: Date.now() };
-  };
-  const onTouchEnd = (e: React.TouchEvent) => {
-    const start = touchRef.current;
-    touchRef.current = null;
-    if (!start) return;
-    const t = e.changedTouches[0];
-    const dx = t.clientX - start.x;
-    const dy = t.clientY - start.y;
-    const dt = Date.now() - start.t;
-    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
-    if (dt > 800) return;
-    advance(dx < 0 ? 1 : -1);
-  };
-
-  const pointerRef = useRef<{ x: number; y: number; id: number } | null>(null);
-  const onPointerDown = (e: React.PointerEvent) => {
-    if (e.pointerType === "touch") return;
-    pointerRef.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
-  };
-  const onPointerUp = (e: React.PointerEvent) => {
-    const start = pointerRef.current;
-    pointerRef.current = null;
-    if (!start || start.id !== e.pointerId) return;
-    const dx = e.clientX - start.x;
-    const dy = e.clientY - start.y;
-    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)) return;
-    advance(dx < 0 ? 1 : -1);
-  };
-
   return (
     <section
       aria-label="Gallery"
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
-      onPointerDown={onPointerDown}
-      onPointerUp={onPointerUp}
       style={{
         position: "relative",
         height: "100vh",
         width: "100%",
         overflow: "hidden",
-        touchAction: "pan-y",
       }}
     >
-      {works.map((w, i) => (
-        <Slide key={w.id} work={w} active={i === index} />
+      {works.map((work, i) => (
+        <Slide key={work.id} work={work} active={i === index} />
       ))}
 
-      <NavButton direction="left" onClick={() => advance(-1)} />
-      <NavButton direction="right" onClick={() => advance(1)} />
-
-      <PreviewCard
-        side="left"
-        work={works[(index - 1 + total) % total]}
-        label="Prev"
+      <button
+        aria-label="Previous artwork"
         onClick={() => advance(-1)}
-      />
-      <PreviewCard
-        side="right"
-        work={works[(index + 1) % total]}
-        label="Next"
+        className="gallery-arrow gallery-arrow-left"
+      >
+        ←
+      </button>
+
+      <button
+        aria-label="Next artwork"
         onClick={() => advance(1)}
-      />
-
-      <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          bottom: 0,
-          height: 1,
-          background: "rgba(26,24,20,0.08)",
-          zIndex: 20,
-        }}
+        className="gallery-arrow gallery-arrow-right"
       >
-        <div
-          key={progressKey}
-          style={{
-            height: "100%",
-            background: "rgba(26,24,20,0.5)",
-            width: "100%",
-            transform: "scaleX(0)",
-            transformOrigin: "left",
-            animation: `gallery-progress ${AUTOPLAY_MS}ms linear forwards`,
-          }}
-        />
-      </div>
-
-      <div
-        role="tablist"
-        aria-label="Gallery slides"
-        style={{
-          position: "absolute",
-          bottom: 16,
-          left: "50%",
-          transform: "translateX(-50%)",
-          display: "flex",
-          gap: 12,
-          zIndex: 25,
-        }}
-      >
-        {works.map((w, i) => (
-          <button
-            key={w.id}
-            type="button"
-            role="tab"
-            aria-selected={i === index}
-            aria-label={`Go to ${w.title}`}
-            onClick={() => goTo(i)}
-            style={{
-              width: 4,
-              height: 4,
-              borderRadius: "50%",
-              background:
-                i === index ? "var(--bone)" : "rgba(26,24,20,0.3)",
-              transition: "background 400ms var(--ease-out)",
-            }}
-          />
-        ))}
-      </div>
+        →
+      </button>
 
       <style jsx>{`
-        @keyframes gallery-progress {
-          from {
-            transform: scaleX(0);
+        .gallery-arrow {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 30;
+          border: none;
+          background: transparent;
+          cursor: pointer;
+          font-size: clamp(24px, 2vw, 34px);
+          font-weight: 300;
+          color: rgba(26, 24, 20, 0.45);
+          transition:
+            color 300ms ease,
+            transform 300ms ease;
+          user-select: none;
+        }
+
+        .gallery-arrow:hover {
+          color: rgba(26, 24, 20, 0.9);
+          transform: translateY(-50%) scale(1.08);
+        }
+
+        .gallery-arrow-left {
+          left: 42px;
+        }
+
+        .gallery-arrow-right {
+          right: 42px;
+        }
+
+        @media (max-width: 768px) {
+          .gallery-arrow-left {
+            left: 18px;
           }
-          to {
-            transform: scaleX(1);
+
+          .gallery-arrow-right {
+            right: 18px;
+          }
+
+          .gallery-arrow {
+            font-size: 26px;
           }
         }
       `}</style>
     </section>
-  );
-}
-
-function PreviewCard({
-  side,
-  work,
-  label,
-  onClick,
-}: {
-  side: "left" | "right";
-  work: Work;
-  label: string;
-  onClick: () => void;
-}) {
-  if (!work) return null;
-  const isLeft = side === "left";
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={`${label}: ${work.title}`}
-      className="preview-card"
-      style={{
-        position: "absolute",
-        bottom: 32,
-        [isLeft ? "left" : "right"]: 28,
-        zIndex: 28,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: isLeft ? "flex-start" : "flex-end",
-        gap: 8,
-        padding: 0,
-        cursor: "pointer",
-      }}
-    >
-      <span
-        style={{
-          fontSize: 9,
-          letterSpacing: "0.3em",
-          textTransform: "uppercase",
-          color: "rgba(26,24,20,0.45)",
-        }}
-      >
-        {label}
-      </span>
-      <div
-        style={{
-          width: 132,
-          height: 88,
-          overflow: "hidden",
-          background: "rgba(26,24,20,0.04)",
-          border: "0.5px solid rgba(26,24,20,0.18)",
-        }}
-      >
-        {work.image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={work.image}
-            alt=""
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              opacity: 0.75,
-              transition: "opacity 400ms var(--ease-out)",
-            }}
-          />
-        ) : null}
-      </div>
-      <span
-        style={{
-          fontFamily: "var(--display)",
-          fontStyle: "italic",
-          fontSize: 13,
-          color: "rgba(26,24,20,0.55)",
-          maxWidth: 132,
-          textAlign: isLeft ? "left" : "right",
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-        }}
-      >
-        {work.title}
-      </span>
-      <style jsx>{`
-        .preview-card:hover img {
-          opacity: 1 !important;
-        }
-        @media (max-width: 768px) {
-          .preview-card {
-            display: none !important;
-          }
-        }
-      `}</style>
-    </button>
   );
 }

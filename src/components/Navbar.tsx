@@ -8,6 +8,8 @@ import type { Work } from "@/data/works";
 type Props = {
   works?: Work[];
   thumbs?: RadialThumb[];
+  selectedYear?: number | null;
+  onSelectYear?: (year: number | null) => void;
 };
 
 const NAV_LINKS: { label: string; href: string }[] = [
@@ -16,28 +18,47 @@ const NAV_LINKS: { label: string; href: string }[] = [
   { label: "ABOUT", href: "/about" },
 ];
 
-export default function Navbar({ works = [], thumbs }: Props) {
+export default function Navbar({
+  works = [],
+  thumbs,
+  selectedYear = null,
+  onSelectYear,
+}: Props) {
   const fallbackThumbs: RadialThumb[] = works
     .filter((w) => w.image)
     .slice(0, 8)
-    .map((w) => ({ id: w.id, image: w.image, title: w.title, href: "/" }));
-  const radialThumbs = thumbs && thumbs.length > 0 ? thumbs : fallbackThumbs;
+    .map((w) => ({
+      id: w.id,
+      image: w.image,
+      title: w.title,
+      href: "/",
+    }));
+
+  const radialThumbs =
+    thumbs && thumbs.length > 0 ? thumbs : fallbackThumbs;
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [workOpen, setWorkOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     if (!menuOpen) return;
+
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setMenuOpen(false);
     };
+
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [menuOpen]);
 
   const yearCounts = useMemo(() => {
     const map = new Map<number, number>();
-    for (const w of works) map.set(w.year, (map.get(w.year) ?? 0) + 1);
+
+    for (const w of works) {
+      map.set(w.year, (map.get(w.year) ?? 0) + 1);
+    }
+
     return Array.from(map.entries()).sort((a, b) => b[0] - a[0]);
   }, [works]);
 
@@ -104,7 +125,32 @@ export default function Navbar({ works = [], thumbs }: Props) {
                   onMouseEnter={() => setWorkOpen(true)}
                   onMouseLeave={() => setWorkOpen(false)}
                 >
-                  <NavLink href={link.href} label={link.label} />
+                  <button
+                    type="button"
+                    onClick={() => onSelectYear?.(null)}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      padding: 0,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: "var(--body)",
+                        fontSize: "clamp(11px, 1.4vw, 14px)",
+                        letterSpacing: "0.22em",
+                        textTransform: "uppercase",
+                        color:
+                          selectedYear === null
+                            ? "var(--bone)"
+                            : "rgba(26,24,20,0.7)",
+                      }}
+                    >
+                      WORK
+                    </span>
+                  </button>
+
                   <div
                     style={{
                       position: "absolute",
@@ -130,43 +176,55 @@ export default function Navbar({ works = [], thumbs }: Props) {
                         textAlign: "center",
                       }}
                     >
-                      {yearCounts.length === 0 ? (
-                        <li
-                          style={{
-                            fontSize: 11,
-                            letterSpacing: "0.2em",
-                            color: "rgba(26,24,20,0.4)",
-                          }}
-                        >
-                          —
-                        </li>
-                      ) : (
-                        yearCounts.map(([year, count]) => (
-                          <li key={year}>
+                      {yearCounts.map(([year, count]) => (
+                        <li key={year}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onSelectYear?.(year);
+                              setWorkOpen(false);
+                            }}
+                            style={{
+                              border: "none",
+                              background: "transparent",
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              gap: 8,
+                              fontSize: 11,
+                              letterSpacing: "0.2em",
+                              textTransform: "uppercase",
+                              color:
+                                selectedYear === year
+                                  ? "var(--bone)"
+                                  : "rgba(26,24,20,0.5)",
+                              fontWeight:
+                                selectedYear === year ? 600 : 400,
+                            }}
+                          >
+                            <span>{year}</span>
                             <span
                               style={{
-                                display: "inline-flex",
-                                gap: 8,
-                                fontSize: 11,
-                                letterSpacing: "0.2em",
-                                color: "rgba(26,24,20,0.5)",
-                                textTransform: "uppercase",
+                                color: "rgba(26,24,20,0.25)",
                               }}
                             >
-                              <span>{year}</span>
-                              <span style={{ color: "rgba(26,24,20,0.25)" }}>
-                                {String(count).padStart(2, "0")}
-                              </span>
+                              {String(count).padStart(2, "0")}
                             </span>
-                          </li>
-                        ))
-                      )}
+                          </button>
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 </div>
               );
             }
-            return <NavLink key={link.label} href={link.href} label={link.label} />;
+
+            return (
+              <NavLink
+                key={link.label}
+                href={link.href}
+                label={link.label}
+              />
+            );
           })}
         </nav>
 
@@ -222,17 +280,23 @@ export default function Navbar({ works = [], thumbs }: Props) {
         </div>
       )}
 
-      <RadialMenu open={menuOpen} onClose={() => setMenuOpen(false)} thumbs={radialThumbs} />
+      <RadialMenu
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        thumbs={radialThumbs}
+      />
 
       <style jsx>{`
         @media (max-width: 900px) {
           :global(.nav-center) {
             display: none !important;
           }
+
           :global(.nav-burger) {
             display: inline-flex !important;
           }
         }
+
         @media (max-width: 480px) {
           :global(.nav-header) {
             padding: 14px 16px !important;
@@ -243,7 +307,13 @@ export default function Navbar({ works = [], thumbs }: Props) {
   );
 }
 
-function NavLink({ href, label }: { href: string; label: string }) {
+function NavLink({
+  href,
+  label,
+}: {
+  href: string;
+  label: string;
+}) {
   return (
     <Link
       href={href}
@@ -254,12 +324,7 @@ function NavLink({ href, label }: { href: string; label: string }) {
         textTransform: "uppercase",
       }}
     >
-      <span className="text-reveal" aria-label={label}>
-        <span className="text-reveal__ghost">{label}</span>
-        <span aria-hidden className="text-reveal__clip">
-          {label}
-        </span>
-      </span>
+      {label}
     </Link>
   );
 }

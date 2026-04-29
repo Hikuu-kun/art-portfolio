@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import VantaBackground from "@/components/VantaBackground";
 import PageTransition from "@/components/PageTransition";
 import "./globals.css";
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <VantaBackground />
         <PageTransition>{children}</PageTransition>
+        <Analytics />
       </body>
     </html>
   );
